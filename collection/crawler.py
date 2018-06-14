@@ -56,7 +56,6 @@ def crawlling_tourspot_visitor(district="서울특별시", start_year=0, end_yea
 
     for ye in range(start_year, end_year+1):
         for mon in range(1, 13):
-            print(pd_fetch_tourspot_visitor(district, year=ye, month=mon))
             for posts in pd_fetch_tourspot_visitor(district, year = ye, month = mon):
                 for post in posts:
                     preprocess_post(post)
