@@ -37,51 +37,29 @@ def analysis_correlation(resultfiles):
     return results
 
 def analysis_correlation_by_tourspot(resultfiles):
+    results = []
+    r_list = {}
+    tour_list={}
     with open(resultfiles['tourspot_visitor'], 'r', encoding = 'utf-8') as infile:
         json_data = json.loads(infile.read())
-    tourspotvisitor_table = pd.DataFrame(json_data, columns = ['date', 'count_forigner', 'tourist_spot'])
+        tourspotvisitor_table = pd.DataFrame(json_data, columns = ['date', 'count_forigner', 'tourist_spot'])
+        tourist_spot = tourspotvisitor_table['tourist_spot'].unique()
+        for tourspot in tourist_spot:
+            tour_list.update({'tourspot': tourspot})
+            for filename in resultfiles['foreign_visitor']:
+                with open(filename, 'r', encoding='utf-8')as infile:
+                    json_data = json.loads(infile.read())
+                foreignvisitor_table = pd.DataFrame(json_data, columns=['country_name', 'date', 'visit_count'])
+                mg = pd.merge(tourspotvisitor_table, foreignvisitor_table)
+                temp_table = mg[mg['tourist_spot'] == tourspot]
+                foreign_name = foreignvisitor_table['country_name'].unique()
+                x = list(temp_table['visit_count'])
+                y = list(temp_table['count_forigner'])
 
-    results = []
-    json_data2 = []
-    r=[]
-    x= []
-    for filename in resultfiles['foreign_visitor']:
-        with open(filename, 'r', encoding='utf-8')as infile:
-            # ad += infile.read()
-            json_data2 += json.loads(infile.read())
-    # print(json_data2)
-    foreignvisitor_table = pd.DataFrame(json_data2[:12], columns=['country_name', 'date', 'visit_count'])
-    foreignvisitor_table2 = pd.DataFrame(json_data2[12:23], columns=['country_name', 'date', 'visit_count'])
-    foreignvisitor_table3 = pd.DataFrame(json_data2[23:], columns=['country_name', 'date', 'visit_count'])
-
-    mg = pd.merge(tourspotvisitor_table, foreignvisitor_table)
-    mg2 = pd.merge(tourspotvisitor_table, foreignvisitor_table2)
-    mg3 = pd.merge(tourspotvisitor_table, foreignvisitor_table3)
-
-    tourist_spot = tourspotvisitor_table['tourist_spot'].unique()
-    forigner_country = foreignvisitor_table['country_name'].unique()
-
-    for i in range(len(tourist_spot)):
-        # tmp = mg[mg['country_name'] == mg['country_name'].unique().item(j)]
-        temp_table = mg[mg['tourist_spot'] == mg['tourist_spot'].unique().item(i)]
-        temp_table2 = mg2[mg2['tourist_spot'] == mg2['tourist_spot'].unique().item(i)]
-        temp_table3 = mg3[mg3['tourist_spot'] == mg3['tourist_spot'].unique().item(i)]
-        # print(temp_table)
-
-        x = list(temp_table['visit_count'])
-        y = list(temp_table['count_forigner'])
-        x2 = list(temp_table2['visit_count'])
-        y2 = list(temp_table3['count_forigner'])
-        x3 = list(temp_table2['visit_count'])
-        y3 = list(temp_table3['count_forigner'])
-
-        r = (correlation_coefficient(x, y))
-        r2 = (correlation_coefficient(x2, y2))
-        r3 = (correlation_coefficient(x3, y3))
-
-        print(tourist_spot[i])
-        results.append({'tourspot': tourist_spot[i], 'r_중국': r, 'r_일본': r2, 'r_미국': r3})
-
+                r = (correlation_coefficient(x, y))
+                r_list.update({'r_%s' % (foreign_name[0]): r})
+            tour_list.update(r_list)
+            results.append(tour_list.copy())
     return results
 
 def correlation_coefficient(x, y):
